@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" rel="stylesheet">
+<script crossorigin="anonymous"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-material-ui/material-ui.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">ETH Transfers</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">เพิ่มข้อมูล</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">รายการข้อมูล</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">ช่องทางติดต่อ</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="row">
+        <div class="container col-12 d-flex justify-content-around mt-5">
+            <div class="container col-4">
+                <select aria-label="Default select example" class="form-select" id="sender_address">
+                    <option disabled selected value="">Please select address</option>
+                    {% for address in accounts_pair %}
+                    <option value="{{ address.account + '_' + address.private_key }}">{{ address.account }}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-end">Sender Address</p>
+            </div>
+            <div class="container col-4">
+                <select aria-label="Default select example" class="form-select" id="receiver_address">
+                    <option disabled selected value="">Please select address</option>
+                    {% for address in accounts_pair %}
+                    <option value="{{ address.account }}">{{ address.account }}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-end">Receiver Address</p>
+            </div>
+            <div class="container col-4">
+                <input class="form-control" id="amount" type="text">
+                <p class="text-end">Amount [ ETH ]</p>
+            </div>
+        </div>
+    </div>
+        <div class="container col-12 d-flex justify-content-center mt-1">
+            <button class="btn btn-primary" id="transaction" onclick="posting_data()" type="button">Send</button>
+        </div>
+    </div>
+
+    <div class="container d-flex justify-content-between my-5">
+        <div class="container ">
+            <h2 class="text-start">ตรวจสอบรายละเอียดการทำธุรกรรม</h2>
+        </div>
+        <div class="container ">
+            <div class="input-group">
+                <select aria-label="Default select example" class="form-select" id="Balance_address">
+                    <option disabled selected value="">Please select address</option>
+                    {% for address in accounts_pair %}
+                    <option value="{{ address.account }}">{{ address.account }}</option>
+                    {% endfor %}
+                </select>
+                <div class="input-group-append">
+                    <button class="btn btn-outline-info" type="button" onclick="check_balance()">Check</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="table-responsive" >
+        <table class="table table-condensed table-striped table-hover">
+            <thead>
+                <tr>
+                    <th  scope="col">Block</th>
+                    <th  scope="col">Time</th>
+                    <th  scope="col">Tnx Hash</th>
+                    <th  scope="col">From</th>
+                    <th  scope="col">To</th>
+                    <th  scope="col">Value</th>
+                    <th  scope="col">Gas</th>
+                </tr>
+            </thead>
+            <tbody id="mytable">
+            </tbody>
+        </table>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.16/dist/sweetalert2.all.min.js"></script>
+
+</body>
+<script>
+    function posting_data() {
+        const sender_data = document.getElementById('sender_address').value
+        const sender_address = sender_data.split('_');
+        const receiver_address = document.getElementById('receiver_address').value
+        const amount = document.getElementById('amount').value
+
+        console.log(JSON.stringify({
+            'sender_private_key': sender_address[1],
+            'sender_address': sender_address[0],
+            'receiver_address': receiver_address,
+            'amount':amount
+    }));
+
+        if (sender_address[0] !== '' && receiver_address !== '' && amount !== '') {
+            Swal.fire({
+                title: 'Confirm your Transaction.',
+                width: 600,
+                showCancelButton: true,
+                confirmButtonText: 'Accept',
+                icon: 'warning',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Loading',
+                        html: 'Auto close when completed',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                            fetch('/send', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    'sender_private_key': sender_address[1],
+                                    'sender_address': sender_address[0],
+                                    'receiver_address': receiver_address,
+                                    "amount":amount
+                                })
+                            })
+                            .then((response) => response.json())
+                            .then((data) => {
+                                if (data['error'] === 'false') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Your request has completed',
+                                        html: data['message'],
+                                        willClose:  () => {
+                                            location.reload(); // refresh the page
+                                        }
+                                    })
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Oops...',
+                                        text: data['message']
+                                    })
+                                }
+                            })
+                        }
+                    })
+    
+                }
+            })
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Please recheck Any input field.'
+            })
+        }
+    }
+
+    function check_balance() {
+    address = document.getElementById('Balance_address').value
+    if (address === '') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please recheck Any input field.'
+        })
+    } else {
+        Swal.fire({
+            title: 'Loading',
+            html: 'Auto close when completed',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+                fetch('/balance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "address": address
+                    })
+                }).then((response) => response.json())
+                    .then((data) => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Your request has completed',
+                            html: 'ETH: ' + data['ether'] + '<br>' +
+                                'gwei: ' + data['wei'] / 1000000000000000000 + ' x 10<sub style="vertical-align:super;">18</sub>'
+                        })
+                    })
+            }
+        })
+    }
+}
+
+
+
+    google.charts.load('current', {
+    'packages': ['corechart', 'bar']
+});
+    google.charts.setOnLoadCallback(loadTable);
+
+let num = 1;
+function loadTable() {
+    const xhttp = new XMLHttpRequest();
+    xhttp.open("GET", "http://127.0.0.1:5000/get_all");
+    xhttp.send();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            let trHTML =  " ";
+            const objects = JSON.parse(this.responseText);
+            for (let object of objects) {
+                trHTML = '<tr>';
+                trHTML += '<td>' + object.blockNumber + '</td>';
+                trHTML += '<td>' + object.timeStamp + '</td>';
+                trHTML += '<td>' + object.hash + '</td>';
+                trHTML += '<td>' + object.from + '</td>';
+                trHTML += '<td>' + object.to+ '</td>';
+                trHTML += '<td>' + object.value + '</td>';
+                trHTML += '<td>' + object.gas/ 1000000000000000000 + 'x 10<sub style="vertical-align:super;">18</sub> gwei</td>';
+                trHTML += '<td>';
+                trHTML += "</tr>"; 
+                document.getElementById("mytable").innerHTML += trHTML;
+            }
+        }
+    };
+}
+
+
+</script>
+</html>
